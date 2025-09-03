@@ -294,18 +294,44 @@ import EtapaCategorizacao from '@/components/oportunidade/EtapaCategorizacao';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api'; // axios pré-configurado apontando para http://localhost:3000/api
 
+
+
+/*interface IdentificacaoData {
+  //titulo: string
+  numeroProcesso: string
+  orgao: string             // agora guarda o ID do órgão (string)
+  estado: string            // UF (mantido estático)
+  setor: string             // ID de setores (string)
+  mercado: string           // ID de mercados (string)
+  valorEstimado: string
+  modalidade: string        // ID de modalidades (string)
+  portalCompras: string     // ID de portais_compra (string)
+  dataAbertura: string
+  dataEntrega: string
+  objeto: string
+  uasg: string
+  esfera: string            // ID de esferas_administrativas (string)
+  status: string            // ID de status_oportunidade (string)
+  pipeline: string          // ID de fases_pipeline (string)
+}*/
+
 interface OportunidadeData {
   identificacao: {
-    titulo: string;
-    numeroProcesso: string;
-    orgao: string;          // SUPÕE: ID de orgao (string)
-    valorEstimado: string;  // "12345.67" (convertemos para número)
-    modalidade: string;     // SUPÕE: ID de modalidade (string)
-    portalCompras: string;  // SUPÕE: ID de portal (string)
-    dataAbertura: string;   // "YYYY-MM-DD"
-    dataEntrega: string;    // "YYYY-MM-DD"
-    objeto: string;
-    // se tiver 'uasg', 'uf', 'esfera', 'mercado', 'setor', 'status', 'pipeline', adicione aqui e no payload abaixo
+  numeroProcesso: string
+  orgao: string             // agora guarda o ID do órgão (string)
+  estado: string            // UF (mantido estático)
+  setor: string             // ID de setores (string)
+  mercado: string           // ID de mercados (string)
+  valorEstimado: string
+  modalidade: string        // ID de modalidades (string)
+  portalCompras: string     // ID de portais_compra (string)
+  dataAbertura: string
+  dataEntrega: string
+  objeto: string
+  uasg: string
+  esfera: string            // ID de esferas_administrativas (string)
+  status: string            // ID de status_oportunidade (string)
+  pipeline: string          // ID de fases_pipeline (string)
   };
   lotes: Array<{
     id: string;
@@ -332,17 +358,24 @@ const CadastroOportunidade = () => {
   const [etapaAtual, setEtapaAtual] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [dadosOportunidade, setDadosOportunidade] = useState<OportunidadeData>({
-    identificacao: {
-      titulo: '',
-      numeroProcesso: '',
-      orgao: '',
-      valorEstimado: '',
-      modalidade: '',
-      portalCompras: '',
-      dataAbertura: '',
-      dataEntrega: '',
-      objeto: ''
-    },
+identificacao: {
+  numeroProcesso: '',
+  orgao: '',
+  estado: '',
+  setor: '',
+  mercado: '',
+  valorEstimado: '',
+  modalidade: '',
+  portalCompras:'',
+  dataAbertura: '',
+  dataEntrega: '',
+  objeto: '',
+  uasg: '',
+  esfera: '',
+  status: '',
+  pipeline: ''
+  }
+,
     lotes: [],
     categorias: [],
     observacoes: ''
@@ -434,7 +467,7 @@ const CadastroOportunidade = () => {
 
       // 1) Cria OPORTUNIDADE
       // Ajuste o payload conforme seu backend (nomes das colunas)
-      const oportunidadePayload: any = {
+      const  any = {
         numero_processo: identificacao.numeroProcesso,
         orgao_id: parseInt(identificacao.orgao, 10), // supõe id vindo como string
         modalidade_id: parseInt(identificacao.modalidade, 10),
@@ -443,7 +476,7 @@ const CadastroOportunidade = () => {
         data_entrega: identificacao.dataEntrega,
         objeto: identificacao.objeto,
         valor_estimado: identificacao.valorEstimado ? Number(identificacao.valorEstimado) : null,
-        titulo: identificacao.titulo || null,
+      //  titulo: identificacao.titulo || null,
         observacoes: observacoes || null,
         // Se tiver no form, inclua: uasg, uf, esfera_id, mercado_id, setor_id, status_id, fase_pipeline_id etc.
       };
