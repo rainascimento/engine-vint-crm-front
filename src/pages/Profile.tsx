@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,42 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Save, Upload, Trash2, User } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Profile() {
-  const [isEditing, setIsEditing] = useState(false);
 
+  const{ user } = useAuth()
+
+  console.log(user)
+  const [isEditing, setIsEditing] = useState(false);
+  const [users, setUsers] = useState([])
+
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+
+        if(user.id){
+           const response = await api.get(`/usuarios/${user.id}`);
+           console.log(response)
+           setUsers(response);
+        }
+        
+
+        // Mapeia os IDs para os nomes correspondentes para exibição na tabela
+       // const usersWithNames = response.map(user => {
+       //   const perfil = mockRoles.find(r => r.id === user.perfil_id);
+       //   const departamento = mockDepartments.find(d => d.id === user.funcao_id);
+
+     //   });
+        
+      } catch (error) {
+        console.error("Erro ao carregar os dados:", error);
+      }
+    };
+    loadData();
+  }, []);
   return (
     <Layout>
       <div className="container mx-auto py-6 max-w-4xl">
@@ -67,7 +99,7 @@ export default function Profile() {
                     <Label htmlFor="firstName">Nome</Label>
                     <Input
                       id="firstName"
-                      defaultValue="João"
+                      defaultValue={users.nome_usuario}
                       disabled={!isEditing}
                       className={!isEditing ? "bg-muted" : ""}
                     />
@@ -88,7 +120,7 @@ export default function Profile() {
                     <Input
                       id="email"
                       type="email"
-                      defaultValue="joao.silva@empresa.com"
+                      defaultValue={users.email}
                       disabled={!isEditing}
                       className={!isEditing ? "bg-muted" : ""}
                     />

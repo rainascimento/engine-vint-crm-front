@@ -34,7 +34,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      //navigate('/dashboard');
     }
   }, [user, navigate]);
 
@@ -49,7 +49,7 @@ const Login = () => {
       if (error) {
         setError('E-mail ou senha incorretos. Verifique suas credenciais e tente novamente.');
       } else {
-        navigate('/dashboard');
+       navigate('/dashboard');
       }
     } catch (err) {
       setError('Erro ao tentar fazer login. Tente novamente.');
@@ -91,6 +91,8 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  
 
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoginData({

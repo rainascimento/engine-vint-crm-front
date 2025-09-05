@@ -1,4 +1,5 @@
 
+import { api } from '@/lib/api';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { toast } from 'sonner';
 
@@ -34,11 +35,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Mock auth session
     const mockUser: User = {
-      id: 'mock-user-id',
-      email: 'user@example.com',
+      id: '6',
+      email: 'caetanopark@gmail.com',
       user_metadata: { full_name: 'Usuário Demo' }
     };
-    
+
     const mockSession: Session = {
       user: mockUser,
       access_token: 'mock-token'
@@ -50,40 +51,70 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Mock login
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser: User = {
-      id: 'mock-user-id',
-      email,
-      user_metadata: { full_name: 'Usuário Demo' }
-    };
-    
-    const mockSession: Session = {
-      user: mockUser,
-      access_token: 'mock-token'
-    };
 
-    setUser(mockUser);
-    setSession(mockSession);
-    toast.success('Login realizado com sucesso!');
-    
-    return { error: null };
+        const mockUser: User = {
+        id: '6',
+        email,
+        user_metadata: { full_name: 'Usuário Demo' }
+      };
+
+      const mockSession: Session = {
+        user: mockUser,
+        access_token: 'mock-token'
+      };
+      
+
+      setUser(mockUser);
+      setSession(mockSession);
+      toast.success('Login realizado com sucesso!');
+
+      return { error: null };
+
+    const user = await api.get(`/usuarios/search/?q=${email}`)
+    console.log(user, "teste user")
+
+    if (user.senha_acesso == password) {
+
+
+    } else {
+
+      toast.message('Credenciais incorretas')
+      return { error: null };
+    }
+
+
+
+
+
+
+
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+
+
+    const userData = {
+      nome_usuario: fullName,
+      email: email,
+      senha_acesso: password,
+      perfil_id: 4,
+      funcao_id: 9,
+      status_id: 1,
+      ultimo_acesso: null,
+      foto_avatar: null
+    };
     // Mock signup
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    const response = await api.post('/usuarios', userData);
+
     toast.success('Conta criada! Verifique seu e-mail para confirmar.');
-    
+
     return { error: null };
   };
 
   const signOut = async () => {
     // Mock logout
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     setUser(null);
     setSession(null);
     toast.success('Logout realizado com sucesso!');
@@ -92,18 +123,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const resetPassword = async (email: string) => {
     // Mock password reset
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     toast.success('E-mail de recuperação enviado!');
-    
+
     return { error: null };
   };
 
   const updatePassword = async (password: string) => {
     // Mock password update
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     toast.success('Senha atualizada com sucesso!');
-    
+
     return { error: null };
   };
 
