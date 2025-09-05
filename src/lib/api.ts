@@ -71,7 +71,10 @@ async function http<T = any>(path: string, opts: HttpOptions = {}): Promise<T> {
   const token = getAuthToken()
 
   try {
+
+    console.log(`${API_BASE}${path}${buildQuery(query)}`)
     const res = await fetch(`${API_BASE}${path}${buildQuery(query)}`, {
+      
       ...init,
       signal: controller.signal,
       headers: {
@@ -123,6 +126,7 @@ export const entityToPath = {
   status_oportunidade: 'status_oportunidade',
   fases_pipeline: 'fases_pipeline',
   funcoes: 'funcoes',
+  usuarios: 'usuarios',
   perfis_acesso: 'perfis_acesso',
   status_usuario: 'status_usuario',
   unidades: 'unidades',
