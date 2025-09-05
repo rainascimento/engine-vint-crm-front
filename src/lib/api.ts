@@ -1,29 +1,4 @@
 // src/lib/api.ts
-/*export const API_BASE = import.meta.env.VITE_API_BASE ?? '/api' // Vite proxy: /api -> http://localhost:3000
-
-async function http<T = any>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
-    ...init,
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`${init?.method ?? 'GET'} ${path} -> ${res.status} ${text}`)
-  }
-  if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
-}
-
-export const api = {
-  get:  <T=any>(path: string) => http<T>(path),
-  post: <T=any>(path: string, body: unknown) => http<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  put:  <T=any>(path: string, body: unknown) => http<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  del:  <T=any>(path: string) => http<T>(path, { method: 'DELETE' }),
-}
-*/
-
-
-// src/lib/api.ts
 // Helper HTTP com GET: COUNT, ALL, BY NAME, BY ID + utilitários.
 
 type Json = Record<string, any> | any[] | null

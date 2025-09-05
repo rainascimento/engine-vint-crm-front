@@ -1,201 +1,115 @@
-
+// src/hooks/useOpportunities.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
+
 
 export interface Opportunity {
-  id: string;
-  title: string;
-  description?: string;
-  organ: string;
-  bidding_number?: string;
-  bidding_type?: string;
-  execution_mode?: string;
-  estimated_value?: number;
-  publication_date?: string;
-  deadline_date?: string;
-  opening_date?: string;
-  status: string;
-  created_by?: string;
-  assigned_to?: string;
-  category?: string;
-  tags?: string[];
-  notes?: string;
+  id: number;
+  numero_processo: string;
+  objeto: string;
+  orgao_id: number;
+  modalidade_id: number;
+  portal_id?: number | null;
+  valor_estimado?: number | null;
+  data_abertura: string;             // ISO date string
+  data_entrega: string;              // ISO date string
+  uasg?: string | null;
+  esfera_id?: number | null;
+  status_id?: number | null;
+  fase_pipeline_id?: number | null;
   created_at?: string;
   updated_at?: string;
+
+  // Se o seu back retornar *joins* opcionais, você pode manter esses campos opcionais:
+  orgao?: { id: number; nome: string };
+  modalidade?: { id: number; nome: string };
+  status_oportunidade?: { id: number; nome: string };
+  fase_pipeline?: { id: number; nome: string; sequencia?: number };
 }
 
-const mockOpportunities: Opportunity[] = [
-  {
-    id: '1',
-    title: 'Sistema de Gestão Educacional',
-    description: 'Contratação de sistema integrado para gestão educacional',
-    organ: 'Ministério da Educação',
-    bidding_number: '23000.000001/2024-11',
-    bidding_type: 'pregao_eletronico',
-    execution_mode: 'menor_preco',
-    estimated_value: 850000,
-    publication_date: '2024-08-01',
-    deadline_date: '2024-09-30',
-    opening_date: '2024-08-15',
-    status: 'analise_tecnica',
-    created_by: 'mock-user-id',
-    assigned_to: 'mock-user-id',
-    category: 'tecnologia',
-    tags: ['TI', 'Educação'],
-    notes: 'Oportunidade estratégica para o setor educacional',
-    created_at: '2024-07-15T10:00:00Z',
-    updated_at: '2024-07-30T14:30:00Z'
-  },
-  {
-    id: '2',
-    title: 'Equipamentos Médicos Hospitalares',
-    description: 'Aquisição de equipamentos médicos para hospitais públicos',
-    organ: 'Ministério da Saúde',
-    bidding_number: '25000.000002/2024-22',
-    bidding_type: 'concorrencia',
-    execution_mode: 'melhor_tecnica',
-    estimated_value: 1200000,
-    publication_date: '2024-08-05',
-    deadline_date: '2024-10-15',
-    opening_date: '2024-08-20',
-    status: 'parecer',
-    created_by: 'mock-user-id',
-    assigned_to: 'mock-user-id',
-    category: 'saude',
-    tags: ['Saúde', 'Equipamentos'],
-    notes: 'Alto valor estratégico para portfólio de saúde',
-    created_at: '2024-07-20T09:15:00Z',
-    updated_at: '2024-07-28T16:45:00Z'
-  },
-  {
-    id: '3',
-    title: 'Infraestrutura Tecnológica Municipal',
-    description: 'Modernização da infraestrutura de TI da prefeitura',
-    organ: 'Prefeitura de São Paulo',
-    bidding_number: '31000.000003/2024-33',
-    bidding_type: 'pregao_eletronico',
-    execution_mode: 'menor_preco',
-    estimated_value: 950000,
-    publication_date: '2024-08-10',
-    deadline_date: '2024-11-10',
-    opening_date: '2024-08-25',
-    status: 'identificacao',
-    created_by: 'mock-user-id',
-    assigned_to: 'mock-user-id',
-    category: 'tecnologia',
-    tags: ['TI', 'Municipal'],
-    notes: 'Oportunidade de expansão no mercado municipal',
-    created_at: '2024-07-25T11:20:00Z',
-    updated_at: '2024-07-29T13:10:00Z'
-  }
-];
+
+export type OpportunityCreate = Omit<
+  Opportunity,
+  'id' | 'created_at' | 'updated_at' | 'orgao' | 'modalidade' | 'status_oportunidade' | 'fase_pipeline'
+>;
+export type OpportunityUpdate = Partial<OpportunityCreate> & { id: number };
+
+
+function unwrapData<T>(res: any): T {
+  return (res?.data ?? res) as T;
+}
 
 export const useOpportunities = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: opportunities = [], isLoading, error } = useQuery({
+  const {
+    data: opportunities = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['opportunities'],
-    queryFn: async () => {
-      console.log('Fetching opportunities...');
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      console.log('Fetched opportunities:', mockOpportunities);
-      return mockOpportunities;
-    },
     enabled: !!user,
+    queryFn: async () => {
+      const res = await api.get('/oportunidades');
+      console.log('Raw opportunities response:', res);
+      const rows = unwrapData<any>(res);
+      console.log('Unwrapped opportunities data:', rows);
+      // aceita tanto array direto quanto { data: [...] }
+      const list: Opportunity[] = Array.isArray(rows) ? rows : (rows?.data ?? []);
+      console.log('Final opportunities list:', list);
+      return list;
+    },
   });
 
   const createOpportunity = useMutation({
-    mutationFn: async (newOpportunity: Omit<Opportunity, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Creating opportunity:', newOpportunity);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockId = String(mockOpportunities.length + 1);
-      const now = new Date().toISOString();
-      
-      const opportunity: Opportunity = {
-        ...newOpportunity,
-        id: mockId,
-        created_at: now,
-        updated_at: now,
-      };
-
-      // Adicionar à lista mock (simulação)
-      mockOpportunities.push(opportunity);
-
-      console.log('Created opportunity:', opportunity);
-      return opportunity;
+    mutationFn: async (payload: OpportunityCreate) => {
+      const res = await api.post('/oportunidades', payload);
+      return unwrapData<Opportunity>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       toast.success('Oportunidade criada com sucesso!');
     },
-    onError: (error) => {
-      console.error('Error in createOpportunity:', error);
-      toast.error('Erro ao criar oportunidade');
+    onError: (err: any) => {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Erro ao criar oportunidade');
     },
   });
 
   const updateOpportunity = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Opportunity> & { id: string }) => {
-      console.log('Updating opportunity:', id, updates);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Simular atualização
-      const index = mockOpportunities.findIndex(opp => opp.id === id);
-      if (index !== -1) {
-        mockOpportunities[index] = {
-          ...mockOpportunities[index],
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-      }
-
-      console.log('Updated opportunity:', mockOpportunities[index]);
-      return mockOpportunities[index];
+    mutationFn: async ({ id, ...updates }: OpportunityUpdate) => {
+      const res = await api.put(`/oportunidades/${id}`, updates);
+      return unwrapData<Opportunity>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       toast.success('Oportunidade atualizada com sucesso!');
     },
-    onError: (error) => {
-      console.error('Error in updateOpportunity:', error);
-      toast.error('Erro ao atualizar oportunidade');
+    onError: (err: any) => {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Erro ao atualizar oportunidade');
     },
   });
 
   const deleteOpportunity = useMutation({
-    mutationFn: async (id: string) => {
-      console.log('Deleting opportunity:', id);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Simular exclusão
-      const index = mockOpportunities.findIndex(opp => opp.id === id);
-      if (index !== -1) {
-        mockOpportunities.splice(index, 1);
-      }
-
-      console.log('Deleted opportunity:', id);
+    mutationFn: async (id: number) => {
+      await api.delete(`/oportunidades/${id}`);
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       toast.success('Oportunidade excluída com sucesso!');
     },
-    onError: (error) => {
-      console.error('Error in deleteOpportunity:', error);
-      toast.error('Erro ao excluir oportunidade');
+    onError: (err: any) => {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Erro ao excluir oportunidade');
     },
   });
+
+  console.log('useOpportunities - opportunities:', opportunities);
 
   return {
     opportunities,
@@ -207,38 +121,15 @@ export const useOpportunities = () => {
   };
 };
 
-// Função auxiliar para mapear fase do pipeline para status
-function getStatusFromPipeline(faseId: number): string {
-  const statusMap: { [key: number]: string } = {
-    1: 'identificacao',
-    2: 'analise_tecnica',
-    3: 'parecer',
-    4: 'proposta',
-    5: 'em_andamento',
-  };
-  return statusMap[faseId] || 'identificacao';
-}
-
-export const useOpportunity = (id: string) => {
+export const useOpportunity = (id: number) => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['opportunity', id],
-    queryFn: async () => {
-      console.log('Fetching opportunity:', id);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      const opportunity = mockOpportunities.find(opp => opp.id === id);
-      
-      if (!opportunity) {
-        throw new Error('Opportunity not found');
-      }
-
-      console.log('Fetched opportunity:', opportunity);
-      return opportunity;
-    },
     enabled: !!user && !!id,
+    queryFn: async () => {
+      const res = await api.get(`/oportunidades/${id}`);
+      return unwrapData<Opportunity>(res);
+    },
   });
 };
