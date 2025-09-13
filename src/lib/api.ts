@@ -6,6 +6,10 @@ type Json = Record<string, any> | any[] | null
 // Use .env (VITE_API_BASE) ou cai para '/api' (proxy do Vite -> Node 3000)
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
+export const API_URL = import.meta.env.API_URL ?? 'http://localhost:3000' // ajuste conforme seu back
+export const FRONT_URL = import.meta.env.VITE_FRONT_URL ?? 'http://localhost:3001' // ajuste conforme seu front
+export const PORT = import.meta.env.PORT ?? 3000 // ajuste conforme seu front
+
 /** Se usar autenticação, injete o token aqui (ex.: localStorage) */
 function getAuthToken(): string | null {
   // return localStorage.getItem('token') // exemplo
