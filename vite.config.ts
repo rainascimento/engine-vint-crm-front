@@ -2,10 +2,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
-const API_URL = import.meta.env.API_URL ?? 'http://localhost:3000' // ajuste conforme seu back
-const FRONT_URL = import.meta.env.VITE_FRONT_URL ?? 'http://localhost:3001' // ajuste conforme seu front
-const PORT = import.meta.env.PORT ?? 3000 // ajuste conforme seu front
+import dotenv from 'dotenv';
+dotenv.config();
 
+console.log(process.env.API_URL);
+
+
+console.log('API_URL');
+const API_URL = process.env.API_URL ?? 'http://localhost:3000' // ajuste conforme seu back
+const FRONT_URL = process.env.VITE_FRONT_URL ?? 'http://localhost:3001' // ajuste conforme seu front
+const PORT = process.env.PORT ?? 3000 // ajuste conforme seu front
+console.log('passou', FRONT_URL);
 // https://vitejs.dev/config/
 
 /*
