@@ -52,7 +52,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
 
-        const mockUser: User = {
+      const useri = {
+        email: email,
+        senha_acesso: password
+      };  
+      
+
+    
+  const user = await fetch('http://localhost:3000/login/entrar', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+
+    },
+    body: JSON.stringify(useri)
+  }).then(result => {
+    if (result.ok) {
+
+      console.log(result)
+
+      const mockUser: User = {
         id: '6',
         email,
         user_metadata: { full_name: 'Usuário Demo' }
@@ -62,31 +81,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user: mockUser,
         access_token: 'mock-token'
       };
-      
 
-      setUser(mockUser);
+        setUser(mockUser);
       setSession(mockSession);
       toast.success('Login realizado com sucesso!');
+      return result.json()
 
-      return { error: null };
-
-    const user = await api.get(`/usuarios/search/?q=${email}`)
-    console.log(user, "teste user")
-
-    if (user.senha_acesso == password) {
+      
+    } 
+  })
 
 
-    } else {
-
-      toast.message('Credenciais incorretas')
-      return { error: null };
-    }
-
-
-
-
-
-
+    return { error: null };
 
   };
 
@@ -104,9 +110,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       foto_avatar: null
     };
     // Mock signup
-    const response = await api.post('/usuarios', userData);
+    const response = await fetch('http://localhost:3000/login/cadastro', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
 
-    toast.success('Conta criada! Verifique seu e-mail para confirmar.');
+    },
+    body: JSON.stringify(userData)
+  }).then(result => {
+    if (result.ok) {
+
+
+       toast.success('Conta criada! Verifique seu e-mail para confirmar.');
+      return result.json()
+
+      
+    } else{
+      toast.error('Erro ao criar conta. Tente novamente.');
+    }
+  })
+    
+
 
     return { error: null };
   };
