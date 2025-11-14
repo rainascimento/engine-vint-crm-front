@@ -114,10 +114,9 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-2xl">V</span>
-          </div>
-          <CardTitle className="text-2xl font-bold">Bem-vindo ao CRM</CardTitle>
+          <img src="/logo-eng.png" alt="Vint Logo" className="mx-auto h-12" />
+          
+          <CardTitle className="text-2xl font-bold">Bem-vindo ao MOTOR da Vint</CardTitle>
           <CardDescription>
             Faça login ou crie sua conta para acessar o sistema
           </CardDescription>
