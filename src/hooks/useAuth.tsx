@@ -33,20 +33,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock auth session
-    const mockUser: User = {
-      id: '6',
-      email: 'caetanopark@gmail.com',
-      user_metadata: { full_name: 'Usuário Demo' }
-    };
 
-    const mockSession: Session = {
-      user: mockUser,
-      access_token: 'mock-token'
-    };
 
-    setUser(mockUser);
-    setSession(mockSession);
+   // setUser(mockUser);
+  //  setSession(mockSession);
     setLoading(false);
   }, []);
 
@@ -82,14 +72,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         access_token: 'mock-token'
       };
 
-        setUser(mockUser);
-      setSession(mockSession);
+     //   setUser(mockUser);
+     // setSession(mockSession);
       toast.success('Login realizado com sucesso!');
       return result.json()
 
       
     } 
+  }).then(data => {
+
+    console.log(data)
+
+      const mockUser: User = {
+        id: data.usuario[0].id,
+        email: data.usuario[0].email,
+      };
+
+      const mockSession: Session = {
+        user: mockUser,
+        access_token: data.token,
+      };
+
+       setUser(mockUser);
+      setSession(mockSession);
   })
+
 
 
     return { error: null };
