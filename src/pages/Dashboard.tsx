@@ -9,6 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, TrendingUp, Clock, CheckCircle, AlertCircle, FileText, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+
 const mockOpportunities = [
   {
     id: 1,
@@ -53,6 +57,33 @@ const getStatusColor = (status: string) => {
 };
 
 export default function Dashboard() {
+
+
+     const{ user } = useAuth()
+   
+     console.log(user)
+     const [isEditing, setIsEditing] = useState(false);
+     const [users, setUsers] = useState([])
+   
+   
+     useEffect(() => {
+       const loadData = async () => {
+         try {
+   
+           if(user.id){
+              const response = await api.get(`/oportunidades`);
+              console.log(response)
+              setUsers(response);
+           }
+           
+           
+         } catch (error) {
+           console.error("Erro ao carregar os dados:", error);
+         }
+       };
+       loadData();
+     }, []);
+
   return (
     <Layout>
       <div className="container mx-auto py-6">

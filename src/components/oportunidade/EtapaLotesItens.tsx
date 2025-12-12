@@ -155,11 +155,15 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
     setNovoItem({ nome: '', unidadeId: '', valorUnitario: 0, quantidade: 1 });
   };
 
+   const isGrupoValid = novoGrupo.nome.trim().length > 0;
+  const isLoteValid = novoLote.nome.trim().length > 0;
+  const isItemValid = novoItem.nome.trim() && novoItem.unidadeId && (novoItem.valorUnitario || 0) > 0;
+
   return (
-    <div className="space-y-6">
+<div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-green-50 border-green-200 rounded-xl">
           <CardContent className="pt-4">
             <div className="text-center">
               <p className="text-sm text-green-600 font-medium">Valor Total</p>
@@ -168,7 +172,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 rounded-xl">
           <CardContent className="pt-4">
             <div className="text-center">
               <p className="text-sm text-blue-600 font-medium">Grupos</p>
@@ -177,7 +181,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="bg-purple-50 border-purple-200 rounded-xl">
           <CardContent className="pt-4">
             <div className="text-center">
               <p className="text-sm text-purple-600 font-medium">Lotes (total)</p>
@@ -190,12 +194,12 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
       </div>
 
       {/* Card único com CRUD de GRUPOS */}
-      <Card>
+      <Card className="rounded-xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Grupos, Lotes e Itens</CardTitle>
           <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
             <DialogTrigger asChild>
-              <Button onClick={abrirNovoGrupo}>
+              <Button onClick={abrirNovoGrupo} className="rounded-lg">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Grupo
               </Button>
@@ -214,6 +218,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                     value={novoGrupo.nome}
                     onChange={(e) => setNovoGrupo(prev => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Grupo 1 - Solução de TI"
+                    className="rounded-lg"
                   />
                 </div>
                 <div className="space-y-2">
@@ -223,14 +228,16 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                     onChange={(e) => setNovoGrupo(prev => ({ ...prev, descricao: e.target.value }))}
                     placeholder="Descrição opcional do grupo"
                     rows={3}
+                    className="rounded-lg"
                   />
                 </div>
               </div>
 
-              {/* Lote (editor) */}
-              <Card className="mt-4">
+              {/* Lote (editor) - DESABILITADO SE isGrupoValid FOR FALSO */}
+              <Card className={`mt-4 transition-opacity ${!isGrupoValid ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 <CardHeader>
                   <CardTitle className="text-base">Adicionar Lote</CardTitle>
+                  {!isGrupoValid && <p className="text-xs text-red-500">Preencha o **Nome do Grupo** acima para adicionar lotes.</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -239,6 +246,8 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                       value={novoLote.nome}
                       onChange={(e) => setNovoLote(prev => ({ ...prev, nome: e.target.value }))}
                       placeholder="Ex: Lote 1 - Equipamentos"
+                      className="rounded-lg"
+                      disabled={!isGrupoValid}
                     />
                   </div>
                   <div className="space-y-2">
@@ -248,11 +257,13 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                       onChange={(e) => setNovoLote(prev => ({ ...prev, descricao: e.target.value }))}
                       placeholder="Descrição opcional deste lote"
                       rows={2}
+                      className="rounded-lg"
+                      disabled={!isGrupoValid}
                     />
                   </div>
 
                   {/* Item (editor dentro do Lote) */}
-                  <Card className="mt-2">
+                  <Card className="mt-2 rounded-lg">
                     <CardHeader>
                       <CardTitle className="text-sm">Adicionar Item ao Lote</CardTitle>
                     </CardHeader>
@@ -264,6 +275,8 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                             value={novoItem.nome}
                             onChange={(e) => setNovoItem(prev => ({ ...prev, nome: e.target.value }))}
                             placeholder="Ex: Notebook Dell i7"
+                            className="rounded-lg"
+                            disabled={!isGrupoValid}
                           />
                         </div>
                         <div className="space-y-2">
@@ -271,9 +284,9 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                           <Select
                             value={novoItem.unidadeId || ''}
                             onValueChange={(v) => setNovoItem(prev => ({ ...prev, unidadeId: v }))}
-                            disabled={loadingUnidades}
+                            disabled={loadingUnidades || !isGrupoValid}
                           >
-                            <SelectTrigger className={!novoItem.unidadeId ? 'border-red-300 focus:border-red-500' : ''}>
+                            <SelectTrigger className={`rounded-lg ${!novoItem.unidadeId && isGrupoValid ? 'border-red-300 focus:border-red-500' : ''}`}>
                               <SelectValue placeholder={loadingUnidades ? 'Carregando...' : 'Selecione a unidade'} />
                             </SelectTrigger>
                             <SelectContent>
@@ -297,6 +310,8 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                             value={novoItem.valorUnitario}
                             onChange={(e) => setNovoItem(prev => ({ ...prev, valorUnitario: parseFloat(e.target.value) || 0 }))}
                             placeholder="0,00"
+                            className="rounded-lg"
+                            disabled={!isGrupoValid}
                           />
                         </div>
                         <div className="space-y-2">
@@ -306,11 +321,17 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                             value={novoItem.quantidade || 1}
                             onChange={(e) => setNovoItem(prev => ({ ...prev, quantidade: parseInt(e.target.value) || 1 }))}
                             placeholder="1"
+                            className="rounded-lg"
+                            disabled={!isGrupoValid}
                           />
                         </div>
                       </div>
 
-                      <Button onClick={adicionarItemAoLote} className="w-full">
+                      <Button
+                        onClick={adicionarItemAoLote}
+                        className="w-full rounded-lg"
+                        disabled={!isGrupoValid || !isLoteValid || !isItemValid}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Adicionar Item
                       </Button>
@@ -319,7 +340,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                       {novoLote.itens.length > 0 && (
                         <div className="mt-3 space-y-2">
                           {novoLote.itens.map((it, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
+                            <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded-lg border">
                               <div className="text-sm">
                                 <div className="font-medium">{it.nome}</div>
                                 <div className="text-muted-foreground">
@@ -327,12 +348,12 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                                   {formatBRL(valorItem(it))}
                                 </div>
                               </div>
-                              <Button variant="outline" size="sm" onClick={() => removerItemDoLote(idx)} className="text-red-600">
+                              <Button variant="destructive" size="sm" onClick={() => removerItemDoLote(idx)} className="rounded-md">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           ))}
-                          <div className="mt-2 p-2 rounded bg-green-50">
+                          <div className="mt-2 p-2 rounded-lg bg-green-100 border border-green-300">
                             <span className="text-sm font-semibold text-green-800">Subtotal do Lote: {formatBRL(valorLote(novoLote))}</span>
                           </div>
                         </div>
@@ -340,7 +361,11 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                     </CardContent>
                   </Card>
 
-                  <Button onClick={adicionarLoteAoGrupo} className="w-full mt-3">
+                  <Button
+                    onClick={adicionarLoteAoGrupo}
+                    className="w-full mt-3 rounded-lg"
+                    disabled={!isGrupoValid || !isLoteValid || novoLote.itens.length === 0}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Lote ao Grupo
                   </Button>
@@ -349,29 +374,33 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                   {novoGrupo.lotes.length > 0 && (
                     <div className="space-y-2 mt-3">
                       {novoGrupo.lotes.map((l, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded-lg border">
                           <div className="text-sm">
                             <div className="font-medium">{l.nome}</div>
                             <div className="text-muted-foreground">
                               Itens: {l.itens.length} • Subtotal: {formatBRL(valorLote(l))}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={() => removerLoteDoGrupo(idx)} className="text-red-600">
+                          <Button variant="destructive" size="sm" onClick={() => removerLoteDoGrupo(idx)} className="rounded-md">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
-                      <div className="mt-2 p-2 rounded bg-blue-50">
+                      <div className="mt-2 p-2 rounded-lg bg-blue-100 border border-blue-300">
                         <span className="text-sm font-semibold text-blue-800">Subtotal do Grupo: {formatBRL(valorGrupo(novoGrupo))}</span>
                       </div>
                     </div>
                   )}
 
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={salvarGrupo} className="flex-1">
+                    <Button
+                      onClick={salvarGrupo}
+                      className="flex-1 rounded-lg"
+                      disabled={!isGrupoValid || novoGrupo.lotes.length === 0}
+                    >
                       {grupoEditando ? 'Atualizar Grupo' : 'Salvar Grupo'}
                     </Button>
-                    <Button variant="outline" onClick={fecharDialog}>
+                    <Button variant="outline" onClick={fecharDialog} className="rounded-lg">
                       Cancelar
                     </Button>
                   </div>
@@ -385,7 +414,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
         <CardContent className="space-y-4">
           {grupos.length > 0 ? (
             grupos.map((g, idx) => (
-              <Card key={idx} className="border-l-4 border-l-primary">
+              <Card key={idx} className="border-l-4 border-l-primary rounded-xl">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
@@ -396,10 +425,10 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => editarGrupo(g)}>
+                      <Button variant="outline" size="sm" onClick={() => editarGrupo(g)} className="rounded-md">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => removerGrupo(idx)} className="text-red-600">
+                      <Button variant="outline" size="sm" onClick={() => removerGrupo(idx)} className="text-red-600 rounded-md">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -409,7 +438,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
                   {g.lotes.length ? (
                     <div className="space-y-2">
                       {g.lotes.map((l, li) => (
-                        <div key={li} className="p-3 rounded bg-muted">
+                        <div key={li} className="p-3 rounded-lg bg-muted border">
                           <div className="flex justify-between">
                             <div className="font-medium">{l.nome}</div>
                             <div className="text-sm">Subtotal: {formatBRL(valorLote(l))}</div>
@@ -438,14 +467,14 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
               </Card>
             ))
           ) : (
-            <Card className="border-dashed border-2 border-muted-foreground/25">
+            <Card className="border-dashed border-2 border-muted-foreground/25 rounded-xl">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Package className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Nenhum grupo cadastrado</h3>
                 <p className="text-muted-foreground text-center mb-6">
                   Adicione o primeiro grupo desta oportunidade. Cada grupo pode conter vários lotes e itens.
                 </p>
-                <Button size="lg" onClick={abrirNovoGrupo}>
+                <Button size="lg" onClick={abrirNovoGrupo} className="rounded-lg">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Primeiro Grupo
                 </Button>
@@ -459,3 +488,7 @@ const EtapaGruposLotesItens: React.FC<Props> = ({ grupos, onGruposChange }) => {
 };
 
 export default EtapaGruposLotesItens;
+
+
+
+

@@ -233,8 +233,10 @@ const CadastroOportunidade = () => {
       });
 
       // Redirecione/limpe se quiser:
-      // window.location.href = '/oportunidades';
+       window.location.href = '/oportunidades';
     } catch (err: any) {
+
+      console.log('Erro ao salvar oportunidade:', err);
       console.error(err);
       toast({
         title: 'Erro ao salvar oportunidade',

@@ -99,6 +99,8 @@ export default function NewOpportunity() {
     }
   };
 
+  console.log(formData , "formData");
+
   return (
     <Layout>
       <div className="p-6 max-w-6xl mx-auto">

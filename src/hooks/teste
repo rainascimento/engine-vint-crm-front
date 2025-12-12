@@ -1,0 +1,60 @@
+export const useOpportunity = (id: number) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['opportunity', id],
+    enabled: !!user && !!id,
+    queryFn: async () => {
+      const res = await api.get(`/oportunidades/${id}`);
+
+
+      const rebuild = {
+        orgao:  await api.get(`/orgaos_publicos/${unwrapData<any>(res).orgao_id}`),
+        modalidade: await api.get(`/modalidades/${unwrapData<any>(res).modalidade_id}`),
+        esfera : await api.get(`/esferas_administrativas/${unwrapData<any>(res).esfera_id}`),
+        status_id : await api.get(`/status_oportunidade/${unwrapData<any>(res).status_id}`),
+        fase_pipeline : await api.get(`/fases_pipeline/${unwrapData<any>(res).fase_pipeline_id}`),
+        setor: await api.get(`/setores/${unwrapData<any>(res).setor_id}`),
+        portal: await api.get(`/portais_compra/${unwrapData<any>(res).portal_id}`),
+        mercado: await api.get(`/mercados/${unwrapData<any>(res).mercado_id}`),
+        data_abertura: unwrapData<any>(res).data_abertura,
+        data_entrega: unwrapData<any>(res).data_entrega,
+      numero_processo: unwrapData<any>(res).numero_processo,
+      objeto: unwrapData<any>(res).objeto,
+      valor_estimado: unwrapData<any>(res).valor_estimado,
+      uasg: unwrapData<any>(res).uasg,
+
+
+      }
+
+
+      const completBuild = {
+                orgao_id: rebuild.orgao.nome,
+        modalidade_id: rebuild.modalidade.nome,
+        esfera : rebuild.esfera.nome,
+        status_id :  rebuild.status_id.nome,
+        fase_pipeline_id :   rebuild.fase_pipeline.nome ,
+        setor: rebuild.setor.nome,
+        portal:  rebuild.portal.nome,
+        mercado:  rebuild.mercado.nome ,
+        data_abertura: unwrapData<any>(res).data_abertura,
+        data_entrega: unwrapData<any>(res).data_entrega,
+      numero_processo: unwrapData<any>(res).numero_processo,
+      objeto: unwrapData<any>(res).objeto,
+      valor_estimado: unwrapData<any>(res).valor_estimado,
+      uasg: unwrapData<any>(res).uasg,
+      }
+
+      
+   
+
+
+     
+     
+
+
+
+      return unwrapData<Opportunity>(completBuild);
+    },
+  });
+};

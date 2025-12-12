@@ -72,7 +72,7 @@ async function http<T = any>(path: string, opts: HttpOptions = {}): Promise<T> {
         const parsed = tryJson()
         body = parsed ? JSON.stringify(parsed) : text
       } catch {}
-      throw new ApiError(`${init.method ?? 'GET'} ${path} -> ${res.status}`, res.status, body)
+      throw new ApiError(`${init.method ?? 'GET caetbno'} ${path} -> ${res.status}`, res.status, body)
     }
 
     if (!text) return undefined as T
@@ -113,6 +113,7 @@ export const entityToPath = {
   tipos_parecer: 'tipos_parecer',
   status_parecer: 'status_parecer',
   permissoes: 'permissoes',
+  orgaos_publicos: 'orgaos_publicos',
   regioes: 'regioes',
   tipos_regiao_com: 'tipos_regiao_com',
   tipos_comercial: 'tipos_comercial',
@@ -158,7 +159,7 @@ export async function getCount(entity: ParameterEntity): Promise<number> {
 /** Exponho também um objeto api básico (GET/POST/PUT/DELETE) caso precise em outros lugares */
 export const api = {
   get:  <T=any>(path: string, opts?: HttpOptions) => http<T>(path, { method: 'GET', ...(opts || {}) }),
-  post: <T=any>(path: string, body?: Json, opts?: HttpOptions) =>
+  post: <T=any>(path: string, body?: Json, opts?: HttpOptions, error?: Error ) =>
     http<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined, ...(opts || {}) }),
   put:  <T=any>(path: string, body?: Json, opts?: HttpOptions) =>
     http<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, ...(opts || {}) }),
