@@ -69,12 +69,12 @@ export const useOrgaosPublicos = () => {
   return useQuery({
     queryKey: ["orgaos-publicos"],
     queryFn: async () => {
-      console.log("Fetching órgãos públicos...");
+
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      console.log("Órgãos públicos fetched:", mockOrgaosPublicos);
+  
       return mockOrgaosPublicos;
     },
   });
@@ -132,13 +132,13 @@ export const useOrgaoOportunidades = (orgaoId: number) => {
   return useQuery({
     queryKey: ["orgao-oportunidades", orgaoId],
     queryFn: async () => {
-      console.log(`Fetching oportunidades for órgão ${orgaoId}...`);
+ 
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 600));
 
       const oportunidades = mockOportunidadesPorOrgao[orgaoId] || [];
-      console.log("Oportunidades fetched:", oportunidades);
+  
       return oportunidades;
     },
     enabled: !!orgaoId,

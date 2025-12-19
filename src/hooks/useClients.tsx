@@ -57,12 +57,12 @@ export const useClients = () => {
   return useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
-      console.log("Fetching clientes...");
+
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      console.log("Clientes fetched:", mockClientes);
+
       return mockClientes;
     },
   });

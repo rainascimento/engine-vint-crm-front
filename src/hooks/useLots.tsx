@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export interface Lot {
   id: string;
@@ -12,54 +13,6 @@ export interface Lot {
   updated_at?: string;
 }
 
-const mockLotsByOpportunity: { [key: string]: Lot[] } = {
-  '1': [
-    {
-      id: '1',
-      opportunity_id: '1',
-      name: 'Lote 1 - Software Base',
-      description: 'Sistema principal de gestão educacional',
-      created_at: '2024-07-15T10:00:00Z',
-      updated_at: '2024-07-30T14:30:00Z'
-    },
-    {
-      id: '2',
-      opportunity_id: '1',
-      name: 'Lote 2 - Módulos Adicionais',
-      description: 'Módulos complementares e integrações',
-      created_at: '2024-07-15T10:00:00Z',
-      updated_at: '2024-07-30T14:30:00Z'
-    }
-  ],
-  '2': [
-    {
-      id: '3',
-      opportunity_id: '2',
-      name: 'Lote Único - Equipamentos',
-      description: 'Conjunto completo de equipamentos médicos',
-      created_at: '2024-07-20T09:15:00Z',
-      updated_at: '2024-07-28T16:45:00Z'
-    }
-  ],
-  '3': [
-    {
-      id: '4',
-      opportunity_id: '3',
-      name: 'Lote 1 - Hardware',
-      description: 'Servidores e equipamentos de rede',
-      created_at: '2024-07-25T11:20:00Z',
-      updated_at: '2024-07-29T13:10:00Z'
-    },
-    {
-      id: '5',
-      opportunity_id: '3',
-      name: 'Lote 2 - Software',
-      description: 'Licenças e sistemas operacionais',
-      created_at: '2024-07-25T11:20:00Z',
-      updated_at: '2024-07-29T13:10:00Z'
-    }
-  ]
-};
 
 export const useLots = (opportunityId: string) => {
   const { user } = useAuth();
@@ -68,13 +21,12 @@ export const useLots = (opportunityId: string) => {
   const { data: lots = [], isLoading, error } = useQuery({
     queryKey: ['lots', opportunityId],
     queryFn: async () => {
-      console.log('Fetching lots for opportunity:', opportunityId);
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 400));
 
-      const lots = mockLotsByOpportunity[opportunityId] || [];
-      console.log('Fetched lots:', lots);
+      const lots = await api.get(`/lotes/by-fk/oportunidade_id/${opportunityId}`);
+
+
+    
       return lots;
     },
     enabled: !!user && !!opportunityId,
@@ -82,10 +34,8 @@ export const useLots = (opportunityId: string) => {
 
   const createLot = useMutation({
     mutationFn: async (newLot: Omit<Lot, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Creating lot:', newLot);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 800));
+
+
 
       const mockId = String(Object.values(mockLotsByOpportunity).flat().length + 1);
       const now = new Date().toISOString();
@@ -103,7 +53,7 @@ export const useLots = (opportunityId: string) => {
       }
       mockLotsByOpportunity[newLot.opportunity_id].push(lot);
 
-      console.log('Created lot:', lot);
+  
       return lot;
     },
     onSuccess: () => {
@@ -118,7 +68,7 @@ export const useLots = (opportunityId: string) => {
 
   const updateLot = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Lot> & { id: string }) => {
-      console.log('Updating lot:', id, updates);
+
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 600));
@@ -132,7 +82,7 @@ export const useLots = (opportunityId: string) => {
             ...updates,
             updated_at: new Date().toISOString(),
           };
-          console.log('Updated lot:', lots[index]);
+
           return lots[index];
         }
       }
@@ -151,8 +101,7 @@ export const useLots = (opportunityId: string) => {
 
   const deleteLot = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting lot:', id);
-      
+
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 400));
 
@@ -161,7 +110,7 @@ export const useLots = (opportunityId: string) => {
         const index = lots.findIndex(lot => lot.id === id);
         if (index !== -1) {
           lots.splice(index, 1);
-          console.log('Deleted lot:', id);
+  
           return;
         }
       }

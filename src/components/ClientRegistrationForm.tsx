@@ -61,7 +61,7 @@ export const ClientRegistrationForm: React.FC<ClientRegistrationFormProps> = ({ 
     });
 
     const handleSubmit = (data: ClientFormData) => {
-        console.log('Client registration data:', data);
+
         toast.success('Cliente/Órgão cadastrado com sucesso!');
         onSubmit?.(data);
         form.reset();

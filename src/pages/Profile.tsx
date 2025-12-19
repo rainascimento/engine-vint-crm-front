@@ -17,7 +17,7 @@ export default function Profile() {
 
   const{ user } = useAuth()
 
-  console.log(user)
+
   const [isEditing, setIsEditing] = useState(false);
   const [users, setUsers] = useState([])
 
@@ -28,7 +28,7 @@ export default function Profile() {
 
         if(user.id){
            const response = await api.get(`/usuarios/${user.id}`);
-           console.log(response)
+
            setUsers(response);
         }
         

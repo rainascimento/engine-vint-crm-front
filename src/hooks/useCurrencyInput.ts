@@ -24,7 +24,7 @@ export const formatCurrency = (valueInCentsString) => {
         maximumFractionDigits: 2,
     });
 
-    console.log(   'Formatando valor:', valueInCents, 'centavos como', formatter.format(valueInCents / 100));
+
     
     // O valor para formatação é o valor em centavos dividido por 100
     return formatter.format(valueInCents / 100);

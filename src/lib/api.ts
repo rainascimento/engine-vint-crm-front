@@ -51,7 +51,6 @@ async function http<T = any>(path: string, opts: HttpOptions = {}): Promise<T> {
 
   try {
 
-    console.log(`${API_BASE}${path}${buildQuery(query)}`)
     const res = await fetch(`${API_BASE}${path}${buildQuery(query)}`, {
       
       ...init,
