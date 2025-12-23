@@ -13,6 +13,15 @@ export interface Lot {
   updated_at?: string;
 }
 
+export type LotCreate = Omit<
+  Lot,
+  'id' | 'oportunidade_id' | 'nome' | 'descricao' | 'grupo_id'
+>;
+
+function unwrapData<T>(res: any): T {
+  return (res?.data ?? res) as T;
+}
+export type LotUpdate = Partial<LotCreate> & { id: string };
 
 export const useLots = (opportunityId: string) => {
   const { user } = useAuth();
@@ -33,28 +42,9 @@ export const useLots = (opportunityId: string) => {
   });
 
   const createLot = useMutation({
-    mutationFn: async (newLot: Omit<Lot, 'id' | 'created_at' | 'updated_at'>) => {
-
-
-
-      const mockId = String(Object.values(mockLotsByOpportunity).flat().length + 1);
-      const now = new Date().toISOString();
-      
-      const lot: Lot = {
-        ...newLot,
-        id: mockId,
-        created_at: now,
-        updated_at: now,
-      };
-
-      // Adicionar à lista mock
-      if (!mockLotsByOpportunity[newLot.opportunity_id]) {
-        mockLotsByOpportunity[newLot.opportunity_id] = [];
-      }
-      mockLotsByOpportunity[newLot.opportunity_id].push(lot);
-
-  
-      return lot;
+  mutationFn: async (payload: LotCreate) => {
+      const res = await api.post('/lotes', payload);
+      return unwrapData<Lot>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lots', opportunityId] });
@@ -67,27 +57,10 @@ export const useLots = (opportunityId: string) => {
   });
 
   const updateLot = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Lot> & { id: string }) => {
-
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Simular atualização
-      for (const lots of Object.values(mockLotsByOpportunity)) {
-        const index = lots.findIndex(lot => lot.id === id);
-        if (index !== -1) {
-          lots[index] = {
-            ...lots[index],
-            ...updates,
-            updated_at: new Date().toISOString(),
-          };
-
-          return lots[index];
-        }
-      }
-
-      throw new Error('Lot not found');
+    mutationFn: async (payload: LotUpdate) => {
+      console.log('Updating lot with id:', payload.id, 'and updates:', payload);
+      const res = await api.put(`/lotes/${payload.id}`, payload);
+      return unwrapData<Lot>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lots', opportunityId] });
@@ -100,22 +73,9 @@ export const useLots = (opportunityId: string) => {
   });
 
   const deleteLot = useMutation({
-    mutationFn: async (id: string) => {
-
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // Simular exclusão
-      for (const lots of Object.values(mockLotsByOpportunity)) {
-        const index = lots.findIndex(lot => lot.id === id);
-        if (index !== -1) {
-          lots.splice(index, 1);
-  
-          return;
-        }
-      }
-
-      throw new Error('Lot not found');
+    mutationFn: async (id: number) => {
+      await api.del(`/lotes/${id}`);
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lots', opportunityId] });

@@ -118,7 +118,8 @@ export const entityToPath = {
   tipos_comercial: 'tipos_comercial',
   tipos_contratacao: 'tipos_contratacao',
   tipos_temperatura: 'tipos_temperatura',
-  oportunidades: 'oportunidades', // incluído pois é comum precisar
+  oportunidades: 'oportunidades',
+  grupo: 'grupo', // incluído pois é comum precisar
 } as const
 
 export type ParameterEntity = keyof typeof entityToPath
@@ -137,6 +138,10 @@ export async function getAll<T = any>(entity: ParameterEntity, query?: HttpOptio
 /** GET BY ID: /api/<entidade>/:id */
 export async function getById<T = any>(entity: ParameterEntity, id: number | string): Promise<T> {
   return http<T>(`${pathOf(entity)}/${id}`)
+}
+
+export async function getByFK<T = any>(entity: ParameterEntity, fk: string, id: number | string): Promise<T> {
+  return http<T>(`${pathOf(entity)}/by-fk/${fk}/${id}`)
 }
 
 /** GET BY NAME (search): /api/<entidade>/search?q=<name> */
