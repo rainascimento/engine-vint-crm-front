@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, getAll, getById, getByName, getCount, entityToPath, type ParameterEntity } from '@/lib/api'
+import { api, getAll, getById, getByName, getCount, entityToPath, type ParameterEntity, getByFK } from '@/lib/api'
 
 export type ParameterEntity2 = ParameterEntity 
 
@@ -38,6 +38,18 @@ export function useParameterById(entity: ParameterEntity, id?: number | string) 
     },
   })
 }
+
+export function useParameterByFK(entity: ParameterEntity,fk: string, id?: number | string, ) {
+  return useQuery({
+    queryKey: ['parameters', entity,fk, id],
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) throw new Error('id obrigatório')
+      return await getByFK<Parameter>(entity, fk, id)
+    },
+  })
+}
+
 
 // -----------------------------
 // GET BY NAME
@@ -136,6 +148,7 @@ export const getEntityDisplayName = (entity: ParameterEntity): string => {
     tipos_contratacao: 'Tipos de Contratação',
     tipos_temperatura: 'Tipos de Temperatura',
     oportunidades: 'Oportunidades',
+    grupo: 'Grupos',
   }
   return displayNames[entity] || entity
 }

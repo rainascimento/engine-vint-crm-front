@@ -64,7 +64,7 @@ export const useOpportunities = () => {
       return list;
     },
   });
-
+ 
   const createOpportunity = useMutation({
     mutationFn: async (payload: OpportunityCreate) => {
       const res = await api.post('/oportunidades', payload);
@@ -97,7 +97,7 @@ export const useOpportunities = () => {
 
   const deleteOpportunity = useMutation({
     mutationFn: async (id: number) => {
-      await api.delete(`/oportunidades/${id}`);
+      await api.del(`/oportunidades/${id}`);
       return true;
     },
     onSuccess: () => {

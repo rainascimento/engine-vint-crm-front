@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 
 export interface Item {
   id: string;
-  lot_id: string;
+  lote_id: string;
   item_number: number;
   description: string;
   unit?: string;
@@ -18,8 +18,16 @@ export interface Item {
   updated_at?: string;
 }
 
+export type ItemsCreate = Omit<
+  Item,
+  'id' | 'lote_id' | 'nome' | 'quantidade' | 'unidade_id' | 'valor_unitario'
+>;
+export type ItemsUpdate = Partial<ItemsCreate> & { id: number };
 
-
+function unwrapData<T>(res: any): T {
+  return (res?.data ?? res) as T;
+}
+ 
 export const useItems = (lotIds: []) => {
   const queryClient = useQueryClient();
 
@@ -48,32 +56,12 @@ export const useItems = (lotIds: []) => {
     .flat();
 
   const createItem = useMutation({
-    mutationFn: async (newItem: Omit<Item, 'id' | 'created_at' | 'updated_at'>) => {
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      const mockId = String(Object.values(mockItemsByLot).flat().length + 1);
-      const now = new Date().toISOString();
-      
-      const item: Item = {
-        ...newItem,
-        id: mockId,
-        total_price: (newItem.quantity || 0) * (newItem.unit_price || 0),
-        created_at: now,
-        updated_at: now,
-      };
-
-      // Adicionar à lista mock
-      if (!mockItemsByLot[newItem.lot_id]) {
-        mockItemsByLot[newItem.lot_id] = [];
-      }
-      mockItemsByLot[newItem.lot_id].push(item);
-
-      return item;
+  mutationFn: async (payload: ItemsCreate) => {
+      const res = await api.post('/itens', payload);
+      return unwrapData<Item>(res);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items', lotId] });
+      queryClient.invalidateQueries({ queryKey: ['items', lotIds] });
       toast.success('Item criado com sucesso!');
     },
     onError: (error) => {
@@ -83,30 +71,13 @@ export const useItems = (lotIds: []) => {
   });
 
   const updateItem = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Item> & { id: string }) => {
-
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Simular atualização
-      for (const items of Object.values(mockItemsByLot)) {
-        const index = items.findIndex(item => item.id === id);
-        if (index !== -1) {
-          items[index] = {
-            ...items[index],
-            ...updates,
-            total_price: (updates.quantity ?? items[index].quantity ?? 0) * (updates.unit_price ?? items[index].unit_price ?? 0),
-            updated_at: new Date().toISOString(),
-          };
-
-          return items[index];
-        }
-      }
-
-      throw new Error('Item not found');
+    mutationFn: async (payload: ItemsUpdate) => {
+      console.log('Updating item with id:', payload.id, 'and updates:', payload);
+      const res = await api.put(`/itens/${payload.id}`, payload);
+      return unwrapData<Item>(res);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items', lotId] });
+      queryClient.invalidateQueries({ queryKey: ['items', lotIds] });
       toast.success('Item atualizado com sucesso!');
     },
     onError: (error) => {
@@ -116,24 +87,12 @@ export const useItems = (lotIds: []) => {
   });
 
   const deleteItem = useMutation({
-    mutationFn: async (id: string) => {
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Simular exclusão
-      for (const items of Object.values(mockItemsByLot)) {
-        const index = items.findIndex(item => item.id === id);
-        if (index !== -1) {
-          items.splice(index, 1);
-
-          return;
-        }
-      }
-
-      throw new Error('Item not found');
+    mutationFn: async (id: number) => {
+      await api.del(`/itens/${id}`);
+      return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items', lotId] });
+      queryClient.invalidateQueries({ queryKey: ['items', lotIds] });
       toast.success('Item excluído com sucesso!');
     },
     onError: (error) => {
@@ -147,8 +106,8 @@ export const useItems = (lotIds: []) => {
     isLoading,
     error,
     results,
-    //createItem,
-    //updateItem,
-   // deleteItem,
+    createItem,
+    updateItem,
+   deleteItem,
   };
 };
