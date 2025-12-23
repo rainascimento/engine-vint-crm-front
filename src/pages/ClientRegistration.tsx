@@ -4,7 +4,7 @@ import { ClientRegistrationForm } from '@/components/ClientRegistrationForm';
 
 const ClientRegistration = () => {
   const handleClientSubmit = (data: any) => {
-    console.log('New client registered:', data);
+
     // Here you would typically send the data to your backend
   };
 

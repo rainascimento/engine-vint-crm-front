@@ -1,7 +1,8 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export interface Item {
   id: string;
@@ -17,74 +18,37 @@ export interface Item {
   updated_at?: string;
 }
 
-const mockItemsByLot: { [key: string]: Item[] } = {
-  '1': [
-    {
-      id: '1',
-      lot_id: '1',
-      item_number: 1,
-      description: 'Licença de software de gestão escolar',
-      unit: 'UN',
-      quantity: 500,
-      unit_price: 120.00,
-      total_price: 60000.00,
-      specifications: 'Software completo para gestão acadêmica',
-      created_at: '2024-07-15T10:00:00Z',
-      updated_at: '2024-07-30T14:30:00Z'
-    },
-    {
-      id: '2',
-      lot_id: '1',
-      item_number: 2,
-      description: 'Suporte técnico anual',
-      unit: 'SV',
-      quantity: 1,
-      unit_price: 15000.00,
-      total_price: 15000.00,
-      specifications: 'Suporte 24x7 durante 12 meses',
-      created_at: '2024-07-15T10:00:00Z',
-      updated_at: '2024-07-30T14:30:00Z'
-    }
-  ],
-  '2': [
-    {
-      id: '3',
-      lot_id: '2',
-      item_number: 1,
-      description: 'Módulo de biblioteca digital',
-      unit: 'UN',
-      quantity: 100,
-      unit_price: 80.00,
-      total_price: 8000.00,
-      specifications: 'Sistema de gerenciamento de biblioteca',
-      created_at: '2024-07-15T10:00:00Z',
-      updated_at: '2024-07-30T14:30:00Z'
-    }
-  ]
-};
 
-export const useItems = (lotId: string) => {
-  const { user } = useAuth();
+
+export const useItems = (lotIds: []) => {
   const queryClient = useQueryClient();
 
-  const { data: items = [], isLoading, error } = useQuery({
-    queryKey: ['items', lotId],
-    queryFn: async () => {
-      console.log('Fetching items for lot:', lotId);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 300));
+  // 1. Configuração das múltiplas queries
+  const results = useQueries({
+    queries: lotIds.map((lotId : any) => ({
+      queryKey: ['items', lotId],
+      queryFn: async () => {
 
-      const items = mockItemsByLot[lotId] || [];
-      console.log('Fetched items:', items);
-      return items;
-    },
-    enabled: !!user && !!lotId,
+        const response = await api.get(`/itens/by-fk/lote_id/${lotId}`);
+        
+        const data = response?.data ?? response;
+        return Array.isArray(data) ? data : [];
+      },
+      
+    })),
   });
+
+  const isLoading = results.some((result) => result.isLoading);
+  const isError = results.some((result) => result.isError);
+  const error = results.find((result) => result.error)?.error;
+
+  const items = results
+    .filter((result) => result.data)
+    .map((result) => result.data)
+    .flat();
 
   const createItem = useMutation({
     mutationFn: async (newItem: Omit<Item, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Creating item:', newItem);
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 600));
@@ -106,7 +70,6 @@ export const useItems = (lotId: string) => {
       }
       mockItemsByLot[newItem.lot_id].push(item);
 
-      console.log('Created item:', item);
       return item;
     },
     onSuccess: () => {
@@ -121,8 +84,7 @@ export const useItems = (lotId: string) => {
 
   const updateItem = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Item> & { id: string }) => {
-      console.log('Updating item:', id, updates);
-      
+
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -136,7 +98,7 @@ export const useItems = (lotId: string) => {
             total_price: (updates.quantity ?? items[index].quantity ?? 0) * (updates.unit_price ?? items[index].unit_price ?? 0),
             updated_at: new Date().toISOString(),
           };
-          console.log('Updated item:', items[index]);
+
           return items[index];
         }
       }
@@ -155,9 +117,7 @@ export const useItems = (lotId: string) => {
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting item:', id);
-      
-      // Simular delay da API
+
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Simular exclusão
@@ -165,7 +125,7 @@ export const useItems = (lotId: string) => {
         const index = items.findIndex(item => item.id === id);
         if (index !== -1) {
           items.splice(index, 1);
-          console.log('Deleted item:', id);
+
           return;
         }
       }
@@ -186,8 +146,9 @@ export const useItems = (lotId: string) => {
     items,
     isLoading,
     error,
-    createItem,
-    updateItem,
-    deleteItem,
+    results,
+    //createItem,
+    //updateItem,
+   // deleteItem,
   };
 };

@@ -185,10 +185,10 @@ const CadastroOportunidade = () => {
           nome: grupo.nome,
           descricao: grupo.descricao || ''
         };
-        console.log('Grupo criado:', grupoPayload);
+  
 
         const gRes = await api.post('/grupo', grupoPayload);
-        console.log('Resposta grupo:', gRes);
+
         const grupoId: number = gRes?.data?.id ?? gRes?.id;
         if (!grupoId) throw new Error('Falha ao criar grupo.');
 
@@ -211,8 +211,9 @@ const CadastroOportunidade = () => {
              // id: 0,
               lote_id: loteId,
               nome: item.nome, // o form já guarda como 'nome' no componente de grupos
-              unidade_id: item.unidadeId ? parseInt(item.unidadeId, 10) : null,
-              valor_unitario: item.valorUnitario ?? 0
+              unidade_id: item.unidadeId ,
+              quantidade: item.quantidade || 0,
+              valor_unitario: item.valorUnitario 
             };
             await api.post('/itens', itemPayload);
           }
@@ -232,10 +233,12 @@ const CadastroOportunidade = () => {
         description: 'Estrutura completa gravada (oportunidade, grupos, lotes, itens e categorias).'
       });
 
-      // Redirecione/limpe se quiser:
-      // window.location.href = '/oportunidades';
+      
+       window.location.href = '/opportunities';
     } catch (err: any) {
-      console.error(err);
+
+
+
       toast({
         title: 'Erro ao salvar oportunidade',
         description: err?.message || 'Tente novamente mais tarde.',

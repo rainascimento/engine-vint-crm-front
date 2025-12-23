@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { id } from 'date-fns/locale';
 
 
 export interface Opportunity {
@@ -54,12 +55,12 @@ export const useOpportunities = () => {
     enabled: !!user,
     queryFn: async () => {
       const res = await api.get('/oportunidades');
-      console.log('Raw opportunities response:', res);
+  
       const rows = unwrapData<any>(res);
-      console.log('Unwrapped opportunities data:', rows);
+
       // aceita tanto array direto quanto { data: [...] }
       const list: Opportunity[] = Array.isArray(rows) ? rows : (rows?.data ?? []);
-      console.log('Final opportunities list:', list);
+   
       return list;
     },
   });
@@ -109,7 +110,7 @@ export const useOpportunities = () => {
     },
   });
 
-  console.log('useOpportunities - opportunities:', opportunities);
+
 
   return {
     opportunities,
@@ -121,15 +122,54 @@ export const useOpportunities = () => {
   };
 };
 
-export const useOpportunity = (id: number) => {
+
+export const useOportunidade = (id: number) => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['opportunity', id],
     enabled: !!user && !!id,
     queryFn: async () => {
+
       const res = await api.get(`/oportunidades/${id}`);
-      return unwrapData<Opportunity>(res);
+      const rawData = unwrapData<any>(res); 
+
+      const entitiesToFetch = [
+        api.get(`/orgaos_publicos/${rawData.orgao_id}`),
+        api.get(`/modalidades/${rawData.modalidade_id}`),
+        api.get(`/esferas_administrativas/${rawData.esfera_id}`),
+        api.get(`/status_oportunidade/${rawData.status_id}`),
+        api.get(`/fases_pipeline/${rawData.fase_pipeline_id}`),
+        api.get(`/setores/${rawData.setor_id}`),
+        api.get(`/portais_compra/${rawData.portal_id}`),
+        api.get(`/mercados/${rawData.mercado_id}`),
+      ];
+
+      const [
+        orgaoRes, modalidadeRes, esferaRes, statusRes, 
+        faseRes, setorRes, portalRes, mercadoRes
+      ] = await Promise.all(entitiesToFetch);
+
+      const completBuild = {
+        orgao_nome: unwrapData<any>(orgaoRes).nome,
+        modalidade_nome: unwrapData<any>(modalidadeRes).nome,
+        esfera_nome: unwrapData<any>(esferaRes).nome,
+        status_nome: unwrapData<any>(statusRes).nome,
+        fase_pipeline_nome: unwrapData<any>(faseRes).nome,
+        setor_nome: unwrapData<any>(setorRes).nome,
+        portal_nome: unwrapData<any>(portalRes).nome,
+        mercado_nome: unwrapData<any>(mercadoRes).nome,
+ 
+        ...rawData, 
+      };
+
+   
+      return {
+        oportunidade: completBuild, 
+        opportunityRaw: rawData,    
+      };
     },
+  
+    select: (data) => data,
   });
 };

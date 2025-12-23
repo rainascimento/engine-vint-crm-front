@@ -54,7 +54,7 @@ export default function NewOpportunity() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    console.log('Form field change:', field, value);
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -66,8 +66,7 @@ export default function NewOpportunity() {
     setIsLoading(true);
 
     try {
-      console.log('Submitting form data:', formData);
-      
+
       if (!formData.title || !formData.organ) {
         toast.error('Título e Órgão são obrigatórios');
         return;
@@ -88,7 +87,6 @@ export default function NewOpportunity() {
         status: 'identificacao' as const,
       };
 
-      console.log('Creating opportunity with data:', opportunityData);
       await createOpportunity.mutateAsync(opportunityData);
       navigate('/opportunities');
     } catch (error) {
@@ -98,6 +96,8 @@ export default function NewOpportunity() {
       setIsLoading(false);
     }
   };
+
+
 
   return (
     <Layout>

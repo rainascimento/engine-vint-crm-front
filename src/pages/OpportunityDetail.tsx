@@ -1,5 +1,3 @@
-// src/pages/OpportunityDetail.tsx
-
 
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
@@ -16,23 +14,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Edit, Save, Plus, Trash2, Pencil } from 'lucide-react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Edit, Save, Plus, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 
-import { useOpportunity, useOpportunities } from '@/hooks/useOpportunities';
+import { useOpportunity, useOpportunities, useOportunidade } from '@/hooks/useOpportunities';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useParametersList } from '@/hooks/useParameters';
+import { DialogDescription } from '@radix-ui/react-dialog';
+import { AlertDialogTitle } from '@/components/ui/alert-dialog';
+
+
+
 
 // ---------- Utils ----------
+
+
+function unwrapData<T>(res: any): T {
+  return (res?.data ?? res) as T;
+}
 const normalize = (s?: string | null) =>
   s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : '';
 
 const getStatusColor = (name?: string) => {
+
+
   const s = normalize(name);
-  if (s.includes('andamento')) return 'bg-green-500 text-white';
+  if (s.includes('aguardando abertura')) return 'bg-green-500 text-white';
   if (s.includes('analise')) return 'bg-amber-500 text-white';
   if (s.includes('parecer')) return 'bg-yellow-500 text-white';
   if (s.includes('proposta')) return 'bg-purple-500 text-white';
@@ -71,29 +82,42 @@ type Grupo = {
 
 // ---------- Hooks utilitários p/ parâmetros ----------
 function useList(url: string) {
+  // O seu hook useList original está aqui, usando useQuery
   return useQuery({
     queryKey: [url],
     queryFn: async () => {
       const res = await api.get(url);
+
       return res?.data ?? [];
     },
   });
 }
 
 // ---------- Aba Categorização (vínculo oportunidade-categoria) ----------
-function CategorizationTab({ opportunityId }: { opportunityId: number }) {
+function CategorizationTab() {
+const params = useParams<{ id: string }>();
+  const opportunityId = Number(params.id) ; 
   const qc = useQueryClient();
 
-  const { data: categorias = [] } = useList('/categorias');
+
+  const { data: categorias = [] } = useParametersList('categorias');
 
   // Lista vínculos atuais
-  const { data: vinculos = [], isLoading } = useQuery({
+  const { data: vinculosRaw = [], isLoading } = useQuery({
     queryKey: ['oportunidade_categoria', opportunityId],
     queryFn: async () => {
-      const res = await api.get('/oportunidade_categoria', { params: { oportunidade_id: opportunityId } });
-      return res?.data ?? [];
+  
+      const res = await api.get(`/oportunidade_categoria/multi/${opportunityId}`);
+
+      return unwrapData(res); 
     },
   });
+  
+
+
+  const vinculos = Array.isArray(vinculosRaw) ? vinculosRaw : [];
+
+
 
   const addVinc = useMutation({
     mutationFn: async (categoria_id: number) => {
@@ -111,14 +135,16 @@ function CategorizationTab({ opportunityId }: { opportunityId: number }) {
   });
 
   const removeVinc = useMutation({
-    // Ajuste a estratégia de remoção conforme seu backend:
-    // Se for por id do vínculo: DELETE /oportunidade-categoria/:id
-    // Se aceitar delete por composite: envia { oportunidade_id, categoria_id } no body
+
+
     mutationFn: async (vinc: any) => {
-      if (vinc?.id) {
-        await api.delete(`/oportunidade_categoria/${vinc.id}`);
+
+      if (vinc?.categoria_id) {
+
+   
+        await api.del(`/oportunidade_categoria/${vinc.categoria_id}`);
       } else {
-        await api.delete(`/oportunidade_categoria`, { data: { oportunidade_id: opportunityId, categoria_id: vinc.categoria_id } });
+
       }
       return true;
     },
@@ -130,6 +156,7 @@ function CategorizationTab({ opportunityId }: { opportunityId: number }) {
   });
 
   const vincCategoriaIds = new Set<number>(vinculos.map((v: any) => v.categoria_id));
+
 
   return (
     <Card>
@@ -145,38 +172,50 @@ function CategorizationTab({ opportunityId }: { opportunityId: number }) {
             <div>
               <Label className="mb-2 block">Categorias vinculadas</Label>
               <div className="flex flex-wrap gap-2">
+                {/* Lógica de exibição de mensagem (0 ou mais) */}
                 {vinculos.length === 0 ? (
                   <span className="text-sm text-muted-foreground">Nenhuma categoria vinculada.</span>
                 ) : (
-                  vinculos.map((v: any) => {
-                    const cat = categorias.find((c: Categoria) => c.id === v.categoria_id);
-                    return (
-                      <Badge key={v.id ?? v.categoria_id} variant="secondary" className="flex items-center gap-2">
-                        {cat?.nome ?? `ID ${v.categoria_id}`}
-                        <button
-                          className="ml-1 text-xs underline"
-                          onClick={() => removeVinc.mutate(v)}
-                          title="Remover"
-                        >
-                          remover
-                        </button>
-                      </Badge>
-                    );
-                  })
+                  <span className="text-sm text-muted-foreground">
+                    {vinculos.length} {vinculos.length === 1 ? 'categoria vinculada' : 'categorias vinculadas'}:
+                  </span>
                 )}
+                
+                {/* Mapeamento dos Badges (Só roda se houver vinculos) */}
+                {vinculos.map((v: any) => {
+                  const cat = categorias.find((c: any) => c.id === v.categoria_id);
+                  return (
+                    <Badge
+                      key={v.categoria_id}
+                      variant="secondary"
+                      className="flex items-center gap-2 bg-gray-200 text-gray-700 p-1 px-2 rounded-full"
+                    >
+                      {cat?.nome ?? `ID ${v.categoria_id}`}
+                      <button
+                        className="ml-1 text-xs underline text-red-500 hover:text-red-700"
+                        onClick={() => removeVinc.mutate(v)}
+                        title="Remover"
+                        disabled={removeVinc.isPending}
+                      >
+                        remover
+                      </button>
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
-
             <div>
               <Label className="mb-2 block">Adicionar categoria</Label>
               <div className="flex gap-2">
                 <Select
                   onValueChange={(val) => addVinc.mutate(Number(val))}
+                  disabled={addVinc.isPending}
                 >
                   <SelectTrigger className="w-80">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* AQUI ESTÁ SEU TRECHO. AGORA FUNCIONA COM .has() */}
                     {categorias
                       .filter((c: Categoria) => !vincCategoriaIds.has(c.id))
                       .map((c: Categoria) => (
@@ -196,20 +235,32 @@ function CategorizationTab({ opportunityId }: { opportunityId: number }) {
 }
 
 // ---------- Aba de GRUPOS com CRUD (vinculado a oportunidade) ----------
-function GroupsTab({ opportunityId }: { opportunityId: number }) {
+function GroupsTab() {
+
+  const params = useParams<{ id: string }>();
+  const opportunityId = Number(params.id);
   const qc = useQueryClient();
 
+
+
   const { data: grupos = [], isLoading } = useQuery({
-    queryKey: ['grupos', opportunityId],
+    queryKey: ['grupo', opportunityId],
     queryFn: async () => {
-      const res = await api.get(`/grupo`, { params: { oportunidade_id: opportunityId } });
-      return res?.data ?? [];
+      const res = await api.get(`/grupo/by-fk/oportunidade_id/${opportunityId}`);
+
+
+      return res;
     },
   });
 
-  const [open, setOpen] = React.useState(false);
+
+  const [open, setOpen] = React.useState(false); // Para criar/editar
   const [editing, setEditing] = React.useState<Grupo | null>(null);
   const [form, setForm] = React.useState<{ nome: string; descricao: string }>({ nome: '', descricao: '' });
+
+  // State para Dialog de Confirmação de Exclusão (Substituindo o confirm())
+  const [isConfirmingDelete, setIsConfirmingDelete] = React.useState(false);
+  const [groupToDelete, setGroupToDelete] = React.useState<Grupo | null>(null);
 
   React.useEffect(() => {
     if (editing) setForm({ nome: editing.nome, descricao: editing.descricao ?? '' });
@@ -255,7 +306,9 @@ function GroupsTab({ opportunityId }: { opportunityId: number }) {
     },
     onSuccess: () => {
       toast.success('Grupo excluído');
-      qc.invalidateQueries({ queryKey: ['grupo', opportunityId] });
+      qc.invalidateQueries({ queryKey: ['grupos', opportunityId] });
+      setIsConfirmingDelete(false); // Fecha o modal de confirmação
+      setGroupToDelete(null); // Limpa o grupo
     },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Erro ao excluir grupo'),
   });
@@ -278,6 +331,12 @@ function GroupsTab({ opportunityId }: { opportunityId: number }) {
         nome: form.nome.trim(),
         descricao: form.descricao.trim(),
       });
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (groupToDelete) {
+      deleteGrupo.mutate(groupToDelete.id);
     }
   };
 
@@ -317,7 +376,7 @@ function GroupsTab({ opportunityId }: { opportunityId: number }) {
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={onSubmit} className="flex-1">
+                <Button onClick={onSubmit} className="flex-1" disabled={createGrupo.isPending || updateGrupo.isPending}>
                   {editing ? 'Salvar alterações' : 'Criar Grupo'}
                 </Button>
                 <Button variant="outline" onClick={() => { setOpen(false); setEditing(null); }}>
@@ -352,8 +411,10 @@ function GroupsTab({ opportunityId }: { opportunityId: number }) {
                     size="sm"
                     className="text-red-600"
                     onClick={() => {
-                      if (confirm('Remover este grupo?')) deleteGrupo.mutate(g.id);
+                      setGroupToDelete(g);
+                      setIsConfirmingDelete(true);
                     }}
+                    disabled={deleteGrupo.isPending}
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Excluir
@@ -364,6 +425,28 @@ function GroupsTab({ opportunityId }: { opportunityId: number }) {
           </div>
         )}
       </CardContent>
+
+      {/* Modal de Confirmação de Exclusão (Substitui confirm()) */}
+      <Dialog open={isConfirmingDelete} onOpenChange={setIsConfirmingDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-6 w-6" /> Confirmação de Exclusão
+            </AlertDialogTitle>
+            <DialogDescription>
+              Você tem certeza que deseja remover o grupo "{groupToDelete?.nome}"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsConfirmingDelete(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteGrupo.isPending}>
+              {deleteGrupo.isPending ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -373,15 +456,29 @@ export default function OpportunityDetail() {
   const params = useParams<{ id: string }>();
   const opportunityId = Number(params.id);
 
-  // Oportunidade (snake_case com joins opcionais)
-  const { data: opportunity, isLoading } = useOpportunity(opportunityId);
+  // Oportunidade
+
+
   const { updateOpportunity } = useOpportunities();
 
-  // Parâmetros (relacionamentos)
-  const { data: orgaos = [] } = useList('/orgaos_publicos');
-  const { data: modalidades = [] } = useList('/modalidades');
-  const { data: statusList = [] } = useList('/status_oportunidade');
-  const { data: fases = [] } = useList('/fases_pipeline');
+  const {
+    data: {
+      oportunidade,
+      opportunityRaw: opportunity // Renomeia a chave 'opportunityRaw' para 'opportunity'
+    } = {},
+    isLoading
+  } = useOportunidade(opportunityId);
+
+
+
+
+  // Parâmetros (relacionamentos) - Os dados vêm daqui (useList)
+  // O uso de useList está correto e os dados serão populados nos Selects abaixo.
+  const { data: orgaos = [] } = useParametersList('orgaos_publicos');
+  const { data: modalidades = [] } = useParametersList('modalidades');
+  const { data: statusList = [] } = useParametersList('status_oportunidade');
+  const { data: fases = [] } = useParametersList('fases_pipeline');
+
 
   // Form de edição
   const [isEditing, setIsEditing] = React.useState(false);
@@ -468,30 +565,26 @@ export default function OpportunityDetail() {
     );
   }
 
-  const organName = opportunity.orgao?.nome ?? '—';
-  const organSigla = opportunity.orgao?.sigla ?? '';
-  const modalidadeNome = opportunity.modalidade?.nome ?? '—';
-  const statusNome = opportunity.status_oportunidade?.nome ?? '—';
-  const faseNome = opportunity.fase_pipeline?.nome ?? '—';
+
 
   return (
     <Layout>
       <div className="container mx-auto py-6">
-   
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">
               {opportunity.numero_processo || 'Sem título'}
             </h1>
-            <p className="text-muted-foreground">{organName}</p>
+            <p className="text-muted-foreground">{oportunidade.orgao_nome}</p>
             <div className="flex items-center gap-2 mt-2">
-             
-              <Badge className={getStatusColor(statusNome)} title="Status do certame">
-                {statusNome}
+
+              <Badge className={getStatusColor(oportunidade.status_nome)} title="Status do certame">
+                {oportunidade.status_nome}
               </Badge>
-             
+
               <Badge variant="secondary" title="Fase do pipeline">
-                {faseNome}
+                {oportunidade.fase_pipeline_nome}
               </Badge>
               {opportunity.created_at && (
                 <span className="text-sm text-gray-500">
@@ -515,7 +608,7 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        
+
         <Tabs defaultValue="identification" className="space-y-6">
           <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="identification">Identificação</TabsTrigger>
@@ -529,7 +622,7 @@ export default function OpportunityDetail() {
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
-         
+
           <TabsContent value="identification">
             <Card>
               <CardHeader>
@@ -560,6 +653,7 @@ export default function OpportunityDetail() {
                           <SelectValue placeholder="Selecione o órgão" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Dados do useList('/orgaos_publicos') */}
                           {orgaos.map((o: Orgao) => (
                             <SelectItem key={o.id} value={String(o.id)}>
                               {o.sigla ? `${o.sigla} — ${o.nome}` : o.nome}
@@ -580,6 +674,7 @@ export default function OpportunityDetail() {
                           <SelectValue placeholder="Selecione a modalidade" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Dados do useList('/modalidades') */}
                           {modalidades.map((m: Modalidade) => (
                             <SelectItem key={m.id} value={String(m.id)}>
                               {m.nome}
@@ -600,6 +695,7 @@ export default function OpportunityDetail() {
                           <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Dados do useList('/status_oportunidade') */}
                           {statusList.map((s: Status) => (
                             <SelectItem key={s.id} value={String(s.id)}>
                               {s.nome}
@@ -620,6 +716,7 @@ export default function OpportunityDetail() {
                           <SelectValue placeholder="Selecione a fase" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Dados do useList('/fases_pipeline') */}
                           {fases
                             .slice()
                             .sort((a: Fase, b: Fase) => (a.sequencia ?? 9999) - (b.sequencia ?? 9999))
@@ -681,7 +778,7 @@ export default function OpportunityDetail() {
             </Card>
           </TabsContent>
 
-      
+
           <TabsContent value="object">
             <Card>
               <CardHeader>
@@ -705,27 +802,27 @@ export default function OpportunityDetail() {
             <GroupsTab opportunityId={opportunityId} />
           </TabsContent>
 
-         
+
           <TabsContent value="lots">
             <LotsAndItems opportunityId={opportunityId} />
           </TabsContent>
 
-         
+
           <TabsContent value="categorization">
             <CategorizationTab opportunityId={opportunityId} />
           </TabsContent>
 
-       
+
           <TabsContent value="opinions">
             <OpinionManagement opportunityId={opportunityId} />
           </TabsContent>
 
-        
+
           <TabsContent value="documents">
             <DocumentUpload opportunityId={opportunityId} />
           </TabsContent>
 
-         
+
           <TabsContent value="intelligence">
             <Card>
               <CardHeader>
@@ -738,7 +835,7 @@ export default function OpportunityDetail() {
             </Card>
           </TabsContent>
 
-        
+
           <TabsContent value="timeline">
             <Card>
               <CardHeader>
@@ -762,4 +859,3 @@ export default function OpportunityDetail() {
     </Layout>
   );
 }
-
